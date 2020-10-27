@@ -15,7 +15,7 @@ cache:
   
 before_script:
   - terraform --version
-  - printf "credentials \"${TFE_SERVER_URL}\" {\n  token = \"${TF_API_TOKEN}\"\n}" > ~/.terraformrc
+  - printf "credentials \"${TF_SERVER_URL}\" {\n  token = \"${TF_API_TOKEN}\"\n}" > ~/.terraformrc
   - cat ~/.terraformrc 
   - terraform init
   
