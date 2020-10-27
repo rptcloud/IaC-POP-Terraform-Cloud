@@ -6,9 +6,6 @@ image:
     - 'AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}' 
     - 'AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}' 
   
-variables:
-  PLAN: plan.tfplan
-
 cache:
   paths:
   - .terraform
@@ -16,7 +13,6 @@ cache:
 before_script:
   - terraform --version
   - printf "credentials \"${TF_SERVER_URL}\" {\n  token = \"${TF_API_TOKEN}\"\n}" > ~/.terraformrc
-  - cat ~/.terraformrc 
   - terraform init
   
 stages:
@@ -34,9 +30,8 @@ validate:
 plan:
   stage: plan
   script:
-    - terraform plan -out=$PLAN
     - echo \`\`\`diff > plan.txt
-    - terraform show -no-color ${PLAN} | tee -a plan.txt
+    - terraform plan -no-color | tee -a plan.txt
     - echo \`\`\` >> plan.txt
     - sed -i -e 's/  +/+/g' plan.txt
     - sed -i -e 's/  ~/~/g' plan.txt
@@ -46,28 +41,20 @@ plan:
       curl -X POST -g -H "PRIVATE-TOKEN: ${GITLAB_ACCESS_TOKEN}" 
       --data-urlencode "body=${MESSAGE}" 
       "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/discussions"
-  artifacts:
-    name: plan
-    paths:
-     - $PLAN
   only:
     - merge_requests
   
 build:
   stage: plan
   script:
-    - terraform plan -out=$PLAN
-  artifacts:
-    name: plan
-    paths:
-      - $PLAN
+    - terraform plan
   only:
     - master
   
 apply:
   stage: apply
   script:
-    - terraform apply -input=false $PLAN
+    - terraform apply -input=false
   dependencies:
     - build
   when: manual
